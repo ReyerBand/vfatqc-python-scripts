@@ -1,5 +1,5 @@
 from plot_scurve import *
-
+from plot_vfat_summary import *
 parser = OptionParser()
 parser.add_option("-i", "--infilename", type="string", dest="filename", default="SCurveFitData.root",
                   help="Specify Input Filename", metavar="filename")
@@ -11,6 +11,8 @@ parser.add_option("-o","--overlay", action="store_true", dest="overlay_fit",
                   help="Make overlay of fit result on scurve", metavar="overlay_fit")
 parser.add_option("-c","--channels_yes", action="store_true", dest="channel_yes",
                   help="Passing a channel number instead of strip number", metavar="channel_yes")
+parser.add_option("-y","--summary_yes", action="store_true", dest="summary_yes",
+                  help="Plot Summaries for each threshold", metavar="summary_yes")
 
 (options, args) = parser.parse_args()
 
@@ -39,7 +41,7 @@ canvas.cd()
 i = 0
 for thresh in thr:
     for event in fitF.scurveFitTree:
-        if (event.vthr == thresh) and (event.vfatN == vfat) and (event.vfatstrip == strip):
+        if (event.vthr == thresh) and (event.vfatN == vfat) and ((event.vfatstrip == strip and not options.channel_yes) or (event.vfatCH == strip and options.channel_yes)):
             Scurves.append((event.scurve_h).Clone())
             pass
         pass
@@ -60,6 +62,9 @@ for hist in Scurves:
         i+=1
         pass
     leg.AddEntry(hist, "Scurve for vthr%i"%thr[i-1])
+    if options.summary_yes:
+        plot_vfat_summary(vfat, filename)
+        pass
     pass
 leg.Draw('SAME')
 canvas.Update()

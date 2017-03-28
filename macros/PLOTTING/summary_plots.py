@@ -21,13 +21,13 @@ parser.add_option("-x","--chi2", action="store_true", dest="chi2_plots",
 (options, args) = parser.parse_args()
 filename = options.filename[:-5]
 
-from ROOT import TFile,TH2D,TH1D,TCanvas,gROOT,gStyle,gPad
+from ROOT import TFile,TH2D,TH1D,TCanvas,gROOT,gStyle,gPad,TGraph
 
 gROOT.SetBatch(True)
 GEBtype = options.GEBtype
 inF = TFile(filename+'.root')
+outF = TFile(filename+'_Plots.root', 'recreate')
 
-#Build the channel to strip mapping from the text file
 
 buildHome = os.environ.get('BUILD_HOME')
 
@@ -38,7 +38,7 @@ vChi2      = ndict()
 vComparison = ndict()
 vNoiseTrim  = ndict()
 vPedestal   = ndict()
-
+vSumofSum = ndict()
 
 for i in range(0,24):
     vNoise[i] = TH1D('Noise%i'%i,'Noise%i;Noise [DAC units]'%i,35,-0.5,34.5)
@@ -50,6 +50,10 @@ for i in range(0,24):
     vComparison[i].GetYaxis().SetTitleOffset(1.5)
     vNoiseTrim[i].GetYaxis().SetTitleOffset(1.5)
     pass
+vSumofSumNoise = TH2D('vSumofSumNoise','Average Noise per VFAT;VFAT;Noise [DAC units]',24,-0.5,23.5,70,-0.5,34.5)
+vSumofSumThreshold = TH2D('vSumofSumThreshold','Average Threshold per VFAT;VFAT;Threshold [DAC units]',24,-0.5,23.5,60,-0.5,299.5)
+vSumofSumNoise.GetYaxis().SetTitleOffset(1.5)
+vSumofSumThreshold.GetYaxis().SetTitleOffset(1.5)
 
 for event in inF.scurveFitTree:
     strip = event.vfatstrip
@@ -64,7 +68,21 @@ for event in inF.scurveFitTree:
     vNoiseTrim[event.vfatN].Fill(event.trimDAC, param1)
     pass
 
+outF.cd()
+for i in range(0,24):
+    vSumofSumNoise.Fill(i, vNoise[i].GetMean())
+    vSumofSumThreshold.Fill(i, vThreshold[i].GetMean())
+    pass
+
+
 if options.fit_plots or options.all_plots:
+
+#    canvas_sumofsum = TCanvas('canvas_sumofsum', 'canvas_sumofsum', 800, 800)
+#    vSumofSumNoise.Draw()
+    vSumofSumNoise.Write()
+    vSumofSumThreshold.Write()
+
+
     gStyle.SetOptStat(111100)
     canv_comp = TCanvas('canv_comp','canv_comp',500*8,500*3)
     canv_comp.Divide(8,3)
@@ -72,6 +90,7 @@ if options.fit_plots or options.all_plots:
         canv_comp.cd(i+1)
         gStyle.SetOptStat(111100)
         vComparison[i].Draw('colz')
+        vComparison[i].Write()
         canv_comp.Update()
         pass
     canv_comp.SaveAs(filename+'_FitSummary.png')
@@ -83,6 +102,7 @@ if options.fit_plots or options.all_plots:
         canv_trim.cd(i+1)
         gStyle.SetOptStat(111100)
         vNoiseTrim[i].Draw('colz')
+        vNoiseTrim[i].Write()
         canv_trim.Update()
         pass
     canv_trim.SaveAs(filename+'_TrimNoiseSummary.png')
@@ -93,6 +113,7 @@ if options.fit_plots or options.all_plots:
         canv_thresh.cd(i+1)
         gStyle.SetOptStat(111100)
         vThreshold[i].Draw()
+        vThreshold[i].Write()
         gPad.SetLogy()
         canv_thresh.Update()
         pass
@@ -105,6 +126,7 @@ if options.fit_plots or options.all_plots:
         gStyle.SetOptStat(111100)
         vPedestal[i].Draw()
         gPad.SetLogy()
+        vPedestal[i].Write()
         canv_Pedestal.Update()
         pass
     canv_Pedestal.SaveAs(filename+'_FitPedestalSummary.png')
@@ -114,6 +136,7 @@ if options.fit_plots or options.all_plots:
     for i in range(0,24):
         canv_noise.cd(i+1)
         vNoise[i].Draw()
+        vNoise[i].Write()
         gPad.SetLogy()
         canv_noise.Update()
         pass
@@ -127,6 +150,7 @@ if options.chi2_plots or options.all_plots:
     for i in range(0,24):
         canv_Chi2.cd(i+1)
         vChi2[i].Draw()
+        vChi2[i].Write()
         gPad.SetLogy()
         canv_Chi2.Update()
         pass
@@ -134,3 +158,5 @@ if options.chi2_plots or options.all_plots:
     canv_Chi2.SaveAs(filename+'_FitChi2Summary.png')
     pass
 
+outF.Write()
+outF.Close()

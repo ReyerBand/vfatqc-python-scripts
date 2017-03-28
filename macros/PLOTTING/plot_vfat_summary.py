@@ -40,7 +40,7 @@ def plot_vfat_summary(VFAT, fit_filename):
     gStyle.SetOptStat(0)
     vSum.Draw('colz')
     canvas.Update()
-    canvas.SaveAs('Summary_VFAT_%i.png'%VFAT)
+    canvas.SaveAs('Summary_VFAT_%i_V1_%i.png'%(VFAT,event.vthr))
     return
 
 plot_vfat_summary(options.vfat, options.filename)
