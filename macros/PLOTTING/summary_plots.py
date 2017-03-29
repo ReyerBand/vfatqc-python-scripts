@@ -1,7 +1,7 @@
 import os
 from optparse import OptionParser
 from gempython.utils.nesteddict import nesteddict as ndict
-
+from numpy import array, zeros
 parser = OptionParser()
 
 parser.add_option("-i", "--infilename", type="string", dest="filename", default="SCurveFitData.root",
@@ -21,7 +21,7 @@ parser.add_option("-x","--chi2", action="store_true", dest="chi2_plots",
 (options, args) = parser.parse_args()
 filename = options.filename[:-5]
 
-from ROOT import TFile,TH2D,TH1D,TCanvas,gROOT,gStyle,gPad,TGraph
+from ROOT import TFile,TH2D,TH1D,TCanvas,gROOT,gStyle,gPad,TGraph, TGraphErrors
 
 gROOT.SetBatch(True)
 GEBtype = options.GEBtype
@@ -38,8 +38,11 @@ vChi2      = ndict()
 vComparison = ndict()
 vNoiseTrim  = ndict()
 vPedestal   = ndict()
-vSumofSum = ndict()
-
+vSumofSumNoise = []
+vSumofSumThreshold = []
+NoiseError = []
+ThreshError = []
+indexholder = []
 for i in range(0,24):
     vNoise[i] = TH1D('Noise%i'%i,'Noise%i;Noise [DAC units]'%i,35,-0.5,34.5)
     vPedestal[i] = TH1D('Pedestal%i'%i,'Pedestal%i;Pedestal [DAC units]'%i,256,-0.5,255.5)
@@ -50,10 +53,7 @@ for i in range(0,24):
     vComparison[i].GetYaxis().SetTitleOffset(1.5)
     vNoiseTrim[i].GetYaxis().SetTitleOffset(1.5)
     pass
-vSumofSumNoise = TH2D('vSumofSumNoise','Average Noise per VFAT;VFAT;Noise [DAC units]',24,-0.5,23.5,70,-0.5,34.5)
-vSumofSumThreshold = TH2D('vSumofSumThreshold','Average Threshold per VFAT;VFAT;Threshold [DAC units]',24,-0.5,23.5,60,-0.5,299.5)
-vSumofSumNoise.GetYaxis().SetTitleOffset(1.5)
-vSumofSumThreshold.GetYaxis().SetTitleOffset(1.5)
+
 
 for event in inF.scurveFitTree:
     strip = event.vfatstrip
@@ -70,17 +70,31 @@ for event in inF.scurveFitTree:
 
 outF.cd()
 for i in range(0,24):
-    vSumofSumNoise.Fill(i, vNoise[i].GetMean())
-    vSumofSumThreshold.Fill(i, vThreshold[i].GetMean())
+    indexholder.append(float(i))
+#Convert from DAC to electrons by mult 300 - 3000 if thresh
+    vSumofSumNoise.append(300*(vNoise[i].GetMean()))
+    vSumofSumThreshold.append((vThreshold[i].GetMean()))
+    NoiseError.append(300*(vNoise[i].GetRMS()))
+    ThreshError.append((vThreshold[i].GetRMS()))
     pass
-
-
 if options.fit_plots or options.all_plots:
+    zero = zeros(24)
 
-#    canvas_sumofsum = TCanvas('canvas_sumofsum', 'canvas_sumofsum', 800, 800)
-#    vSumofSumNoise.Draw()
-    vSumofSumNoise.Write()
-    vSumofSumThreshold.Write()
+    vSumofSumNoiseGraph = TGraphErrors(24, array(indexholder), array(vSumofSumNoise), zero, array(NoiseError))
+    vSumofSumThresholdGraph = TGraphErrors(24, array(indexholder), array(vSumofSumThreshold), zero, array(ThreshError))
+
+    if 'higher' in filename:
+        vSumofSumNoiseGraph.SetName("higher_SumNoise")
+        vSumofSumThresholdGraph.SetName("higher_SumThresh")
+        pass
+    else:
+        vSumofSumNoiseGraph.SetName("lower_SumNoise")
+        vSumofSumThresholdGraph.SetName("lower_SumThresh")
+        pass
+    vSumofSumNoiseGraph.SetMarkerStyle(2)
+    vSumofSumThresholdGraph.SetMarkerStyle(2)
+    vSumofSumNoiseGraph.Write()
+    vSumofSumThresholdGraph.Write()
 
 
     gStyle.SetOptStat(111100)

@@ -13,7 +13,7 @@ parser.add_option("-c","--channels", action="store_true", dest="channels",
 (options, args) = parser.parse_args()
 
 
-def plot_vfat_summary(VFAT, STRIP, fit_filename):
+def plot_noise_vs_trim(VFAT, STRIP, fit_filename):
     from ROOT import TFile,TCanvas,gStyle,TH2D
 
     fitF = TFile(fit_filename)
@@ -41,4 +41,4 @@ def plot_vfat_summary(VFAT, STRIP, fit_filename):
         pass
     return
 
-plot_vfat_summary(options.vfat, options.strip, options.filename)
+plot_nosie_vs_trim(options.vfat, options.strip, options.filename)
