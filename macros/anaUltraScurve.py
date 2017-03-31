@@ -12,8 +12,6 @@ parser.add_option("-i", "--infilename", type="string", dest="filename", default=
                   help="Specify Input Filename", metavar="filename")
 parser.add_option("-o", "--outfilename", type="string", dest="outfilename", default="SCurveFitData.root",
                   help="Specify Output Filename", metavar="outfilename")
-parser.add_option("-b", "--drawbad", action="store_true", dest="drawbad",
-                  help="Draw fit overlays for Chi2 > 10000", metavar="drawbad")
 parser.add_option("-t", "--type", type="string", dest="GEBtype", default="long",
                   help="Specify GEB (long/short)", metavar="GEBtype")
 parser.add_option("-f", "--fit", action="store_true", dest="SaveFile",
@@ -123,31 +121,6 @@ vthr_list = []
 trim_list = []
 trimrange_list = []
 lines = []
-def overlay_fit(VFAT, CH):
-    Scurve = TH1D('Scurve','Scurve for VFAT %i channel %i;VCal [DAC units]'%(VFAT, CH),255,-0.5,254.5)
-    strip = lookup_table[VFAT][CH]
-    pan_pin = pan_lookup[VFAT][CH]
-    for event in inF.scurveTree:
-        if (event.vfatN == VFAT) and (event.vfatCH == CH):
-            Scurve.Fill(event.vcal, event.Nhits)
-            pass
-        pass
-    param0 = scanFits[0][VFAT][CH]
-    param1 = scanFits[1][VFAT][CH]
-    param2 = scanFits[2][VFAT][CH]
-    fitTF1 =  TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
-    fitTF1.SetParameter(0, param0)
-    fitTF1.SetParameter(1, param1)
-    fitTF1.SetParameter(2, param2)
-    canvas = TCanvas('canvas', 'canvas', 500, 500)
-    gStyle.SetOptStat(1111111)
-    Scurve.Draw()
-    fitTF1.Draw('SAME')
-    canvas.Update()
-    canvas.SaveAs('Fit_Overlay_VFAT%i_Strip%i.png'%(VFAT, strip))
-    return
-
-
 
 for i in range(0,24):
     vScurves.append([])
@@ -238,12 +211,6 @@ if options.SaveFile:
             holder_curve.Copy(scurve_h)
             Nev[0] = scanFits[4][vfat][ch]
         #Filling the arrays for plotting later
-            if options.drawbad:
-                if (Chi2 > 1000.0 or Chi2 < 1.0):
-                    overlay_fit(vfat, ch)
-                    print "Chi2 is, %d"%(Chi2)
-                    pass
-                pass
             myT.Fill()
             pass 
         pass
