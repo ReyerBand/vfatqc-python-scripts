@@ -8,7 +8,7 @@ import sys, os, random, time
 from array import array
 
 from gempython.tools.optohybrid_user_functions_uhal import *
-from gempython.tools.vfat_functions_uhal import *
+from gempython.tools.vfat_user_functions_uhal import *
 
 from qcoptions import parser
 
@@ -56,9 +56,12 @@ myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
 link = array( 'i', [ 0 ] )
 myT.Branch( 'link', link, 'link/I' )
 link[0] = options.gtx
+utime = array( 'i', [ 0 ] )
+myT.Branch( 'utime', utime, 'utime/I' )
 
-import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+import subprocess,datetime,time
+utime[0] = int(time.time())
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 
