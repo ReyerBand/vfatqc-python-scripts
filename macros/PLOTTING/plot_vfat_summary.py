@@ -21,7 +21,7 @@ def plot_vfat_summary(VFAT, fit_filename):
     else:
         vSum = TH2D('vSum', 'vSum for VFAT %i; Strips; VCal [DAC units]'%VFAT, 128, -0.5, 127.5, 256, -0.5, 255.5)
         pass
-    vSum.GetYaxis().SetTitleOffset(1.5)
+    vSum.GetYaxis().SetTitleOffset(1.25)
     for event in fitF.scurveFitTree:
         if (event.vfatN == VFAT):
             Scurve = ((event.scurve_h).Clone())
