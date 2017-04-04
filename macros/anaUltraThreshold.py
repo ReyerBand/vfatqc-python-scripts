@@ -1,3 +1,4 @@
+#!/bin/env python
 import os
 from optparse import OptionParser
 from array import array
@@ -64,37 +65,39 @@ hot_channels = []
 for i in range(0,24):
     hot_channels.append([])
     if not (options.channels or options.PanPin):
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Strip;VThreshold1 [DAC units]'%i,128,-0.5,127.5,101,-0.5,100.5)
+        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Strip;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
         pass
     elif options.channels:
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Channel;VThreshold1 [DAC units]'%i,128,-0.5,127.5,101,-0.5,100.5)
+        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Channel;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
         pass
     elif options.PanPin:
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Panasonic Pin;VThreshold1 [DAC units]'%i,128,-0.5,127.5,101,-0.5,100.5)
+        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Panasonic Pin;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
         pass
     for j in range(0,128):
         hot_channels[i].append(False)
         pass
     pass
 print 'Filling Histograms'
+trimRange = {}
 for event in inF.thrTree :
     strip = lookup_table[event.vfatN][event.vfatCH]
     pan_pin = pan_lookup[event.vfatN][event.vfatCH]
+    trimRange[int(event.vfatN)] = int(event.trimRange)
     if options.channels:
         vSum[event.vfatN].Fill(event.vfatCH,event.vth1,event.Nhits)
-        if event.vth1 > 94 and event.Nhits > 0:
+        if event.vth1 > 150 and event.Nhits > 0:
             hot_channels[event.vfatN][event.vfatCH] = True
             pass
         pass
     elif options.PanPin:
         vSum[event.vfatN].Fill(pan_pin,event.vth1,event.Nhits)
-        if event.vth1 > 94 and event.Nhits > 0:
+        if event.vth1 > 150 and event.Nhits > 0:
             hot_channels[event.vfatN][pan_pin] = True
             pass
         pass
     else:
         vSum[event.vfatN].Fill(strip,event.vth1,event.Nhits)
-        if event.vth1 > 94 and event.Nhits > 0:
+        if event.vth1 > 150 and event.Nhits > 0:
             hot_channels[event.vfatN][strip] = True
             pass
         pass
@@ -166,9 +169,9 @@ for i in range(0,24):
     pass
 outF.Close()
 txt = file(filename+"/ThresholdByVFAT.txt", 'w')
-txt.write("VFAT/I:VThreshold1/I\n")
+txt.write("VFAT/I:VThreshold1/I:trimRange/I\n")
 for i in range(0,24):
-    txt.write('%i\t%i\n'%(i, vt1[i]))
+    txt.write('%i\t%i\t%i\n'%(i, vt1[i],trimRange[i]))
     pass
 txt.close()
 
