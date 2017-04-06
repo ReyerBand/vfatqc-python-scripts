@@ -14,7 +14,7 @@ from qcoptions import parser
 
 parser.add_option("--vt2", type="int", dest="vt2", default=0,
                   help="Specify VT2 to use", metavar="vt2")
-parser.add_option("-f", "--filename", type="string", dest="filename", default="VThreshold1Data_Trimmed.root",
+parser.add_option("-f", "--filename", type="string", dest="filename", default="VT1ScanData.root",
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--perchannel", action="store_true", dest="perchannel",
                   help="Run a per-channel VT1 scan", metavar="perchannel")
@@ -43,9 +43,9 @@ myT.Branch( 'Nev', Nev, 'Nev/I' )
 vth = array( 'i', [ 0 ] )
 myT.Branch( 'vth', vth, 'vth/I' )
 vth1 = array( 'i', [ 0 ] )
-myT.Branch( 'vth1', vth, 'vth1/I' )
+myT.Branch( 'vth1', vth1, 'vth1/I' )
 vth2 = array( 'i', [ 0 ] )
-myT.Branch( 'vth2', vth, 'vth2/I' )
+myT.Branch( 'vth2', vth2, 'vth2/I' )
 vth2[0] = options.vt2
 Nhits = array( 'i', [ 0 ] )
 myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
@@ -68,7 +68,7 @@ Date = startTime
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
 THRESH_MIN = 0
-THRESH_MAX = 100
+THRESH_MAX = 150
 
 N_EVENTS = Nev[0]
 CHAN_MIN = 0
@@ -86,7 +86,7 @@ try:
     if options.perchannel or options.trkdata:
         mode = scanmode.THRESHTRK
         if options.perchannel:
-            scanmode.THRESHCH
+            mode = scanmode.THRESHCH
             pass
         sendL1A(ohboard, options.gtx, interval=250, number=0)
 

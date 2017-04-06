@@ -81,20 +81,20 @@ for event in inF.thrTree :
     strip = lookup_table[event.vfatN][event.vfatCH]
     pan_pin = pan_lookup[event.vfatN][event.vfatCH]
     if options.channels:
-        vSum[event.vfatN].Fill(event.vfatCH,event.vth,event.Nhits)
-        if event.vth > 94 and event.Nhits > 0:
+        vSum[event.vfatN].Fill(event.vfatCH,event.vth1,event.Nhits)
+        if event.vth1 > 94 and event.Nhits > 0:
             hot_channels[event.vfatN][event.vfatCH] = True
             pass
         pass
     elif options.PanPin:
-        vSum[event.vfatN].Fill(pan_pin,event.vth,event.Nhits)
-        if event.vth > 94 and event.Nhits > 0:
+        vSum[event.vfatN].Fill(pan_pin,event.vth1,event.Nhits)
+        if event.vth1 > 94 and event.Nhits > 0:
             hot_channels[event.vfatN][pan_pin] = True
             pass
         pass
     else:
-        vSum[event.vfatN].Fill(strip,event.vth,event.Nhits)
-        if event.vth > 94 and event.Nhits > 0:
+        vSum[event.vfatN].Fill(strip,event.vth1,event.Nhits)
+        if event.vth1 > 94 and event.Nhits > 0:
             hot_channels[event.vfatN][strip] = True
             pass
         pass

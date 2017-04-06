@@ -20,7 +20,7 @@ parser.add_option("--dirPath", type="string", dest="dirPath", default=None,
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 
-
+from ROOT import TFile
 uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 (options, args) = parser.parse_args()
 
@@ -178,8 +178,9 @@ else:
                 pass
             pass
         pass
-    except:
-        print "%s does not exist! Exiting"
+    except Exception as e:
+        print "%s does not exist! Exiting"%rangeFile
+        print e
         exit(404)
 
 #Init trimDACs to all zeros
