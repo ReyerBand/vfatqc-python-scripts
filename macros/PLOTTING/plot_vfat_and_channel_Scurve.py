@@ -1,4 +1,6 @@
 from plot_scurve import *
+import os
+from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option("-i", "--infilename", type="string", dest="filename", default="SCurveFitData.root",

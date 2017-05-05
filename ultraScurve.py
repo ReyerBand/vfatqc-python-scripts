@@ -12,6 +12,12 @@ from qcoptions import parser
 
 parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
                   help="Specify Output Filename", metavar="filename")
+parser.add_option("-l", "--latency", type="int", dest = "latency", default = 37,
+                  help="Specify Latency", metavar="latency")
+parser.add_option("-m", "--mono", type="int", dest = "MSPL", default = 48,
+                  help="Specify MSPL.  Must be range 0-7 after bitshifting to the right by 4", metavar="MSPL")
+parser.add_option("--CalPhase", type="int", dest = "CalPhase", default = 0,
+                  help="Specify CalPhase", metavar="CalPhase")
 
 (options, args) = parser.parse_args()
 uhal.setLogLevelTo( uhal.LogLevel.WARNING )
@@ -23,6 +29,10 @@ else:
 
 import ROOT as r
 filename = options.filename
+if (((options.MSPL >> 4) > 7) or ((options.MSPL >> 4) < 0)):
+    print "Enter a valid range for the MSPL.  MSPL >> 4 must be between 0 and 7."
+    exit
+    pass
 myF = r.TFile(filename,'recreate')
 myT = r.TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
 
@@ -43,6 +53,9 @@ vthr = array( 'i', [ 0 ] )
 myT.Branch( 'vthr', vthr, 'vthr/I' )
 trimDAC = array( 'i', [ 0 ] )
 myT.Branch( 'trimDAC', trimDAC, 'trimDAC/I' )
+latency = array( 'i', [ 0 ] )
+myT.Branch( 'latency', latency, 'latency/I' )
+latency[0] = options.latency
 link = array( 'i', [ 0 ] )
 myT.Branch( 'link', link, 'link/I' )
 link[0] = options.gtx
@@ -61,8 +74,8 @@ SCURVE_MIN = 0
 SCURVE_MAX = 254
 
 N_EVENTS = Nev[0]
-CHAN_MIN = 0
-CHAN_MAX = 128
+CHAN_MIN = 67
+CHAN_MAX = 68
 if options.debug:
     CHAN_MAX = 5
     pass
@@ -78,9 +91,10 @@ try:
     #biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
     #writeAllVFATs(ohboard, options.gtx, "VThreshold1", 100, 0)
 
-    writeAllVFATs(ohboard, options.gtx, "Latency",    37, mask)
+    writeAllVFATs(ohboard, options.gtx, "Latency",    options.latency, mask)
     writeAllVFATs(ohboard, options.gtx, "ContReg0", 0x37, mask)
-    writeAllVFATs(ohboard, options.gtx, "ContReg2",   48, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg2",   int(options.MSPL), mask)
+    writeAllVFATs(ohboard, options.gtx, "CalPhase",    options.CalPhase, mask)
 
     for vfat in range(0,24):
         for scCH in range(CHAN_MIN,CHAN_MAX):

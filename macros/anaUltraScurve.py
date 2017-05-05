@@ -115,6 +115,8 @@ if options.SaveFile:
     myT.Branch( 'chi2', chi2, 'chi2/F')
     Nev = array( 'f', [ 0 ] )
     myT.Branch( 'Nev', Nev, 'Nev/F')
+    latency = array( 'i', [ 0 ] )
+    myT.Branch( 'latency', latency, 'latency/I')
     pass
 
 vSum  = ndict()
@@ -230,6 +232,7 @@ if options.SaveFile:
             vfatCH[0] = ch
             ROBstr[0] = strip
             panPin[0] = pan_pin
+            latency[0] = event.latency
             trimRange[0] = trimrange_list[vfat][ch] 
             vthr[0] = vthr_list[vfat][ch]
             trimDAC[0] = trim_list[vfat][ch]

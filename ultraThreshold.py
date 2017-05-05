@@ -20,6 +20,16 @@ parser.add_option("--perchannel", action="store_true", dest="perchannel",
                   help="Run a per-channel VT1 scan", metavar="perchannel")
 parser.add_option("--trkdata", action="store_true", dest="trkdata",
                   help="Run a per-VFAT VT1 scan using tracking data (default is to use trigger data)", metavar="trkdata")
+parser.add_option("-l", "--latency", type="int", dest = "latency", default = 37,
+                  help="Specify Latency", metavar="latency")
+parser.add_option("--MSPL", type="int", dest = "MSPL", default = 48,
+                  help="Specify value written to ContReg2.  A value of 0 corresponds to 1 clock cycle.  Must be range 0-7 after bitshifting to the right by 4", metavar="MSPL")
+parser.add_option("--CalPhase", type="int", dest = "CalPhase", default = 0,
+                  help="Specify CalPhase", metavar="CalPhase")
+parser.add_option("--CalPulse", action="store_true", dest="CalPulse",
+                  help="Configure to send a CalPulse before the scan", metavar="CalPulse")
+parser.add_option("--VCal", type="int", dest = "VCal", default = 255,
+                  help="Specify VCal pulse in DAC units to be sent with CalPulse option.", metavar="VCal")
 
 (options, args) = parser.parse_args()
 
@@ -62,7 +72,18 @@ mode = array( 'i', [ 0 ] )
 myT.Branch( 'mode', mode, 'mode/I' )
 utime = array( 'i', [ 0 ] )
 myT.Branch( 'utime', utime, 'utime/I' )
+latency = array( 'i', [ 0 ] )
+myT.Branch( 'latency', latency, 'latency/I' )
+latency[0] = options.latency
 
+if options.CalPulse:
+    CalPhase = array( 'i', [ 0 ] )
+    myT.Branch( 'CalPhase', CalPhase, 'CalPhase/I' )
+    VCal = array( 'i', [ 0 ] )
+    myT.Branch( 'VCal', VCal, 'VCal/I' )
+    CalPhase[0] = options.CalPhase
+    VCal[0] = options.VCal
+    pass
 import subprocess,datetime,time
 utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
@@ -75,16 +96,25 @@ THRESH_MIN = 0
 THRESH_MAX = 250
 
 N_EVENTS = Nev[0]
-CHAN_MIN = 0
-CHAN_MAX = 128
+CHAN_MIN = 67
+CHAN_MAX = 68
 if options.debug:
     CHAN_MAX = 5
     pass
 mask = 0
 
 try:
-    writeAllVFATs(ohboard, options.gtx, "Latency",     0, mask)
+    if options.CalPulse:
+        setTriggerSource(ohboard,options.gtx,1)
+        configureLocalT1(ohboard, options.gtx, 1, 0, 40, 250, 0, options.debug)
+        startLocalT1(ohboard, options.gtx)
+        writeAllVFATs(ohboard, options.gtx, "VCal",    options.VCal, mask)
+        writeAllVFATs(ohboard, options.gtx, "CalPhase",    options.CalPhase, mask)
+        pass
+
+    writeAllVFATs(ohboard, options.gtx, "Latency",     options.latency, mask)
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg2",   int(options.MSPL), mask)
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
     if options.perchannel or options.trkdata:
@@ -92,11 +122,17 @@ try:
         if options.perchannel:
             mode[0] = scanmode.THRESHCH
             pass
-        sendL1A(ohboard, options.gtx, interval=250, number=0)
+#        sendL1A(ohboard, options.gtx, interval=250, number=0)
 
         for scCH in range(CHAN_MIN,CHAN_MAX):
             vfatCH[0] = scCH
             print "Channel #"+str(scCH)
+            if options.CalPulse:
+                for vfat in range(0,24):
+                    trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
+                    writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
+                    pass
+                pass
             configureScanModule(ohboard, options.gtx, mode[0], mask, channel = scCH,
                                 scanmin = THRESH_MIN, scanmax = THRESH_MAX,
                                 numtrigs = int(N_EVENTS),
